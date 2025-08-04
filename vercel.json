@@ -2,7 +2,7 @@
   "functions": {
     "api/message.js": {
       "memory": 1024,
-      "maxDuration": 10
+      "maxDuration": 5
     },
     "api/telegram.js": {
       "memory": 1024,
@@ -10,7 +10,14 @@
     }
   },
   "routes": [
-    { "src": "/message.txt", "dest": "/api/message" },
-    { "src": "/telegram-webhook", "dest": "/api/telegram" }
+    {
+      "src": "/message.txt",
+      "dest": "/api/message"
+    },
+    {
+      "src": "/telegram-webhook",
+      "dest": "/api/telegram",
+      "methods": ["POST"]
+    }
   ]
 }
