@@ -1,33 +1,45 @@
-import { Redis } from '@upstash/redis';
+// api/message.js
+const UPSTASH_REDIS_REST_URL = "https://romantic-oryx-9266.upstash.io";
+const UPSTASH_REDIS_REST_TOKEN = "ASQyAAIjcDFkY2QwZjI4NWUwZTE0NmQ2Yjk2OWVjNjRiOGI5ZGRmZXAxMA";
 
-// Initialize Redis with timeout
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
-  timeout: 5000 // 5 second timeout
-});
+// In-memory cache as fallback
+let cachedMessage = {
+  text: 'No messages yet',
+  timestamp: 0
+};
 
 export default async (req, res) => {
-  // Set headers first
+  // Set response headers
   res.setHeader('Content-Type', 'text/plain');
-  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
+  res.setHeader('Cache-Control', 'public, max-age=30');
   
   try {
-    // Fast fail if Redis isn't configured
-    if (!process.env.UPSTASH_REDIS_REST_URL) {
-      throw new Error('Redis URL not configured');
-    }
-
-    // Get message with timeout fallback
-    const message = await Promise.race([
-      redis.get('latest_message'),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Redis timeout')), 4000)
-    ]);
+    // Try to fetch from Upstash
+    const response = await fetch(`${UPSTASH_REDIS_REST_URL}/get/latest_message`, {
+      headers: {
+        'Authorization': `Bearer ${UPSTASH_REDIS_REST_TOKEN}`
+      },
+      timeout: 3000
+    });
     
-    return message || 'No messages yet';
-  } catch (err) {
-    console.error('Error:', err.message);
-    return 'Message service unavailable. Try again later.';
+    if (!response.ok) throw new Error('Upstash request failed');
+    
+    const data = await response.json();
+    const message = data.result || 'No messages yet';
+    
+    // Update cache
+    cachedMessage = {
+      text: message,
+      timestamp: Date.now()
+    };
+    
+    return message;
+  } catch (error) {
+    console.error('Error:', error.message);
+    // Return cached message if available
+    if (Date.now() - cachedMessage.timestamp < 60000) { // 1 minute cache
+      return cachedMessage.text;
+    }
+    return 'Message service is currently unavailable';
   }
 };
