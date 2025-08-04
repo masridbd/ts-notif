@@ -1,25 +1,24 @@
-// Simple in-memory storage solution (bypasses Upstash timeout issues)
-let lastMessage = 'No messages yet';
+// Simple in-memory storage (persists between requests in serverless environment)
+let storedMessage = 'No messages yet';
+let lastUpdate = 0;
 
 export default async (req, res) => {
-  // Set headers first for fast response
+  // Set headers first for immediate response
   res.setHeader('Content-Type', 'text/plain');
-  res.setHeader('Cache-Control', 's-maxage=10');
+  res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate');
   
   // Handle POST requests (from Telegram bot)
   if (req.method === 'POST') {
-    lastMessage = req.body.message || lastMessage;
-    return res.status(200).send('OK');
+    try {
+      const body = JSON.parse(req.body);
+      storedMessage = body.message || storedMessage;
+      lastUpdate = Date.now();
+      return res.status(200).send('OK');
+    } catch (err) {
+      return res.status(400).send('Bad Request');
+    }
   }
   
   // Handle GET requests
-  return res.status(200).send(lastMessage);
-};  } catch (error) {
-    console.error('Error:', error.message);
-    // Return cached message if available
-    if (Date.now() - cachedMessage.timestamp < 60000) { // 1 minute cache
-      return cachedMessage.text;
-    }
-    return 'Message service is currently unavailable';
-  }
+  return res.status(200).send(storedMessage);
 };
