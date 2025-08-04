@@ -1,5 +1,5 @@
 {
-  "name": "telegram-vercel-upstash-bot",
+  "name": "ts_notif",
   "version": "1.0.0",
   "dependencies": {
     "telegraf": "^4.12.2",
