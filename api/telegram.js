@@ -1,30 +1,17 @@
-import { Redis } from '@upstash/redis';
-import { createRouter } from 'micro';
-
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+// Add this at the top after Redis initialization
+redis.ping().catch(err => {
+  console.error('Redis connection error:', err);
 });
 
-const bot = new (require('telegraf'))(process.env.TELEGRAM_BOT_TOKEN);
-
-const router = createRouter();
-
-router.post('/', async (req, res) => {
+// Modify the bot handler
+bot.on('text', async (ctx) => {
   try {
-    const update = await req.json();
-    bot.handleUpdate(update);
-    return 'OK';
+    await redis.set('latest_message', ctx.message.text, {
+      ex: 3600 // expire after 1 hour
+    });
+    await ctx.reply('Message saved!');
   } catch (err) {
-    console.error(err);
-    return { error: err.message };
+    console.error('Save error:', err);
+    await ctx.reply('Failed to save message');
   }
 });
-
-bot.on('text', async (ctx) => {
-  const message = ctx.message.text;
-  await redis.set('latest_message', message);
-  await ctx.reply(`Message saved: ${message}`);
-});
-
-export default router;
