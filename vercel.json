@@ -1,5 +1,11 @@
 {
-  "rewrites": [
-    { "source": "/message.txt", "destination": "/api/message" }
+  "functions": {
+    "api/*": {
+      "memory": 3008,
+      "maxDuration": 15
+    }
+  },
+  "routes": [
+    { "src": "/message.txt", "dest": "/api/message" }
   ]
 }
