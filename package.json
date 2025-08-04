@@ -1,5 +1,5 @@
 {
-  "name": "ts-notif",
+  "name": "ts_notif",
   "version": "1.0.0",
   "description": "Vercel app that connects Telegram bot to Upstash and serves messages",
   "main": "index.js",
