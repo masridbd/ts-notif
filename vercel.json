@@ -1,8 +1,5 @@
 {
   "rewrites": [
-    {
-      "source": "/message.txt",
-      "destination": "/api/bot"
-    }
+    { "source": "/message.txt", "destination": "/api/message" }
   ]
 }
